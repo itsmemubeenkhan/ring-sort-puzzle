@@ -1,4 +1,4 @@
-package com.socialgeniex.ring_sort_puzzle
+package com.socialgeniex.ringsort
 
 import io.flutter.embedding.android.FlutterActivity
 

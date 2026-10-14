@@ -92,13 +92,12 @@ Future<void> main() async {
     sound.enabled = storage.soundOn;
 
     final ads = AdsService();
-    ads.removeAdsPurchased = storage.removeAds;
-    // Fire-and-forget: MobileAds.instance.initialize() can hang on some
-    // devices, so it must never be awaited on the startup path. init() has
-    // its own timeout, and every ad load waits for successful init anyway.
-    unawaited(ads.init().catchError((_) {}));
+    // NO-ADS BUILD (user instruction 2026-10-15): ads stay completely off.
+    // The AdMob SDK is never initialized and no ad is ever loaded.
+    ads.removeAdsPurchased = true;
 
     final iap = IapService();
+    // NO-ADS BUILD: IAP is not initialized either (shop disabled for now).
     // Purchase callbacks are wired after provider creation (see below).
 
     runApp(
@@ -128,15 +127,7 @@ Future<void> main() async {
       _startupComplete = true;
     });
 
-    // IAP init deferred: it talks to Play Billing and must never block
-    // startup either.
-    unawaited(
-      Future.delayed(const Duration(milliseconds: 500), () async {
-        try {
-          await iap.init().timeout(const Duration(seconds: 15));
-        } catch (_) {}
-      }).catchError((_) {}),
-    );
+    // NO-ADS BUILD: IAP init skipped (shop disabled for now).
   }, (error, stack) {
     _reportFatal(error);
   });
