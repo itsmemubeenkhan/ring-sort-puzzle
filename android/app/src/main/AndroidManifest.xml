@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Needed for in-app purchases (Play Billing) -->
     <uses-permission android:name="com.android.vending.BILLING" />
     <!-- Needed for AdMob -->
@@ -42,6 +43,19 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- CRITICAL: Remove MobileAdsInitProvider. The AdMob SDK injects it
+             via manifest merger, and it calls MobileAds.initialize()
+             synchronously on the main thread during Application startup
+             (before MainActivity / Flutter / Dart even start). On some
+             devices this hangs (ANR) or crashes the app instantly at launch.
+             We initialize the SDK manually from Dart (AdsService.init:
+             fire-and-forget, 15s timeout, fully guarded), so the provider
+             must not run. -->
+        <provider
+            android:name="com.google.android.gms.ads.MobileAdsInitProvider"
+            android:authorities="${applicationId}.mobileadsinitprovider"
+            tools:node="remove" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

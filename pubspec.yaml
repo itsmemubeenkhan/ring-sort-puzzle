@@ -2,7 +2,7 @@ name: ring_sort_puzzle
 description: "Ring Sort Puzzle - a color ring sorting puzzle game."
 publish_to: 'none'
 
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: ^3.7.0
