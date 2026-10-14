@@ -14,14 +14,26 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final storage = StorageService();
-  await storage.init();
+  try {
+    await storage.init().timeout(const Duration(seconds: 5));
+  } catch (_) {
+    // Storage failure must never kill startup.
+  }
 
   final sound = SoundService();
-  sound.enabled = storage.soundOn;
+  try {
+    sound.enabled = storage.soundOn;
+  } catch (_) {}
 
   final ads = AdsService();
-  ads.removeAdsPurchased = storage.removeAds;
-  await ads.init();
+  try {
+    ads.removeAdsPurchased = storage.removeAds;
+  } catch (_) {}
+  // NOTE: ads.init() is intentionally NOT awaited here.
+  // MobileAds.instance.initialize() can hang indefinitely on some devices
+  // (no Play services / blocked network), which used to freeze the app on
+  // the splash screen forever. It now runs after the first frame, guarded
+  // by a timeout, so startup can never block on ads.
 
   final iap = IapService();
   // Purchase callbacks are wired after provider creation (see below).
@@ -49,8 +61,16 @@ Future<void> main() async {
     ),
   );
 
-  // Init IAP after first frame to avoid blocking startup.
-  Future.delayed(const Duration(seconds: 1), () => iap.init());
+  // Post-startup async init, fully guarded: failures/timeouts are swallowed
+  // so the game always remains playable.
+  Future.delayed(const Duration(milliseconds: 500), () async {
+    try {
+      await ads.init().timeout(const Duration(seconds: 15));
+    } catch (_) {}
+    try {
+      await iap.init().timeout(const Duration(seconds: 15));
+    } catch (_) {}
+  });
 }
 
 class RingSortApp extends StatelessWidget {
